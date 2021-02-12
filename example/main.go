@@ -19,7 +19,7 @@ func main() {
 	pool := workers.NewPool(10, func(i ...interface{}) {
 		job := i[0].(*Job)
 		fmt.Println("Worker ran with values:", job.Value, i[1])
-		<-time.After(10000 * time.Millisecond)
+		<-time.After(time.Millisecond)
 	})
 	// See NewBufferedPool (source/godoc) for buffered job queues
 	// that will not block when all of the workers are busy
@@ -29,6 +29,7 @@ func main() {
 	pool.Run(&Job{Value: "f"}, ":(") // Worker ran with values: f :(
 	pool.Run(&Job{Value: true}, "E") // Worker ran with values: true E
 
+	<-time.After(time.Microsecond) // wait for Run workers to start doing work
 	// Busy & total workers
 	busy := pool.Busy()
 	total := pool.Size()
@@ -36,7 +37,7 @@ func main() {
 	// Not guaranteed (or likely) to print 2 for this example code!
 	// WorkerPool#Run does not wait for a job to start; only for it
 	// to be accepted by a worker, which will run it shortly after
-	fmt.Printf("%d/%d workers are busy. %d workers are waiting for jobs.\n", busy, total, waiting)
+	fmt.Printf("%d/%d workers are busy. %d workers are waiting for jobs.\n", busy, total, waiting) // 3/10, 7
 
 	// You can use ScaleTo if you don't know which direction to scale in.
 	// Scale methods will block until all of the excess workers
@@ -45,9 +46,11 @@ func main() {
 	// or ScaleUp/ScaleDown
 	_ = pool.ScaleUp(15)
 	go pool.ScaleDown(1)
+	<-time.After(time.Microsecond) // wait for ScaleDown to finish variable changes, but not for workers to stop
+
 	// or you can run it in a new goroutine and check up on the excess workers
 	excess := pool.Excess()
-	fmt.Println("There are", excess, "excess workers (active workers waiting to be stopped)")
+	fmt.Println("There are", excess, "excess workers (active workers waiting to be stopped)") // 2 excess
 
 	// or, you can implement automatic scaling (see below)
 

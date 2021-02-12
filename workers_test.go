@@ -38,6 +38,15 @@ func TestWorkerPool_ScaleDown(t *testing.T) {
 	}
 }
 
+func TestWorkerPool_Stop(t *testing.T) {
+	pool := NewPool(10, func(interface{}) {})
+
+	_ = pool.ScaleDown(5)
+	if pool.size != 5 {
+		t.Error("pool size should be 5, not", pool.size)
+	}
+}
+
 func TestNewBufferedPool(t *testing.T) {
 	NewBufferedPool(10, 5, func(interface{}) {})
 }
@@ -57,15 +66,15 @@ func TestWorkerPool_ScaleRandom(t *testing.T) {
 	// forgive this ugly test!
 
 	go pool.ScaleUp(100)
-	<-time.After(1 * time.Millisecond)
+	<-time.After(time.Microsecond)
 	go pool.ScaleDown(25)
-	<-time.After(1 * time.Millisecond)
+	<-time.After(time.Microsecond)
 	go pool.ScaleUp(80)
-	<-time.After(1 * time.Millisecond)
+	<-time.After(time.Microsecond)
 	go pool.ScaleUp(125)
-	<-time.After(1 * time.Millisecond)
-	pool.ScaleDown(60)
-	<-time.After(1 * time.Millisecond)
+	<-time.After(time.Microsecond)
+	go pool.ScaleDown(60)
+	<-time.After(time.Microsecond)
 	pool.ScaleDown(50)
 
 	<-time.After(1 * time.Millisecond)

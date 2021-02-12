@@ -27,7 +27,12 @@ type WorkerPool struct {
 }
 
 // Create a new WorkerPool with an initial worker count
+//
+// Panics when size < 0
 func NewPool(size int, run RunFunc) *WorkerPool {
+	if size < 0 {
+		panic("size must be greater than zero")
+	}
 	pool := &WorkerPool{
 		run:  run,
 		jobs: make(chan interface{}),
@@ -44,7 +49,12 @@ func NewPool(size int, run RunFunc) *WorkerPool {
 //
 // The job buffer allows new jobs to be queued without blocking if
 // all the workers are busy
+//
+// Panics when size < 0
 func NewBufferedPool(size, bufSize int, run RunFunc) *WorkerPool {
+	if size < 0 {
+		panic("size must be greater than zero")
+	}
 	pool := &WorkerPool{
 		run:  run,
 		jobs: make(chan interface{}, bufSize),
@@ -60,6 +70,17 @@ func NewBufferedPool(size, bufSize int, run RunFunc) *WorkerPool {
 // Add a job to this WorkerPool
 func (w *WorkerPool) Run(data interface{}) {
 	w.jobs <- data
+}
+
+// Resize the WorkerPool by scaling up or down to accommodate a new size
+func (w *WorkerPool) ScaleTo(newSize int) error {
+	if newSize < w.size {
+		return w.ScaleDown(newSize)
+	}
+	if newSize > w.size {
+		return w.ScaleUp(newSize)
+	}
+	return errors.New("newSize must not be equal to the current size")
 }
 
 // Scale the WorkerPool up to a new specified size
@@ -83,8 +104,8 @@ func (w *WorkerPool) ScaleUp(newSize int) error {
 //
 // Not goroutine-safe; use the scale operations in the proper order
 func (w *WorkerPool) ScaleDown(newSize int) error {
-	if newSize >= w.size {
-		return errors.New("the new size must be less than the current size")
+	if newSize < 0 || newSize >= w.size {
+		return errors.New("the new size must be between zero and the current size")
 	}
 
 	w.sizeMutex.Lock()

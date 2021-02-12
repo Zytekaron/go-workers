@@ -1,6 +1,6 @@
 # go-workers
 ```
-go get go-workers
+go get github.com/Zytekaron/go-workers
 ```
 Support: [Contact Me](https://zytekaron.com/contact/)
 

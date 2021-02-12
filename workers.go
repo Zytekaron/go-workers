@@ -9,13 +9,13 @@ type RunFunc func(interface{})
 
 type WorkerPool struct {
 	// The worker's run function
-	run       RunFunc
+	run RunFunc
 
 	// The channel for workers to listen for jobs
-	jobs      chan interface{}
+	jobs chan interface{}
 
 	// The channel to stop a certain number of workers
-	stop      chan struct{}
+	stop chan struct{}
 
 	// The size of this worker pool (number of workers)
 	size      int
@@ -26,7 +26,7 @@ type WorkerPool struct {
 	busyMutex sync.Mutex
 }
 
-// Creates a new WorkerPool with an initial size
+// Create a new WorkerPool with an initial worker count
 func NewPool(size int, run RunFunc) *WorkerPool {
 	pool := &WorkerPool{
 		run:  run,
@@ -40,7 +40,7 @@ func NewPool(size int, run RunFunc) *WorkerPool {
 	return pool
 }
 
-// Creates a new WorkerPool with an initial job channel and buffer size
+// Create a new WorkerPool with an initial worker count and job buffer size
 //
 // The job buffer allows new jobs to be queued without blocking if
 // all the workers are busy
@@ -57,12 +57,12 @@ func NewBufferedPool(size, bufSize int, run RunFunc) *WorkerPool {
 	return pool
 }
 
-// Queue up a task for this WorkerPool
+// Add a job to this WorkerPool
 func (w *WorkerPool) Run(data interface{}) {
 	w.jobs <- data
 }
 
-// Scales the WorkerPool up to a new specified size
+// Scale the WorkerPool up to a new specified size
 //
 // Not goroutine-safe; use the scale operations in the proper order
 func (w *WorkerPool) ScaleUp(newSize int) error {
@@ -79,7 +79,7 @@ func (w *WorkerPool) ScaleUp(newSize int) error {
 	return nil
 }
 
-// Scales the WorkerPool down to a new specified size
+// Scale the WorkerPool down to a new specified size
 //
 // Not goroutine-safe; use the scale operations in the proper order
 func (w *WorkerPool) ScaleDown(newSize int) error {
@@ -98,7 +98,7 @@ func (w *WorkerPool) ScaleDown(newSize int) error {
 	return nil
 }
 
-// Stops the WorkerPool by closing all channels and stopping all workers
+// Stop the WorkerPool by closing all channels and stopping all workers
 func (w *WorkerPool) Stop() {
 	close(w.jobs)
 	close(w.stop)

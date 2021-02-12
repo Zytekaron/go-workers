@@ -16,16 +16,16 @@ func main() {
 	// Create a new worker pool with 100 workers
 	// and a function which handles jobs by printing them.
 	// All 100 allocated workers here are created upfront.
-	pool := workers.NewPool(100, func(i interface{}) {
-		job := i.(*Job)
-		fmt.Println("Worker ran with value:", job.Value)
+	pool := workers.NewPool(100, func(i ...interface{}) {
+		job := i[0].(*Job)
+		fmt.Println("Worker ran with values:", job.Value, i[1])
 	})
 	// See NewBufferedPool (source/godoc) for buffered job queues
 	// that will not block when all of the workers are busy
 
 	// Run jobs!
-	pool.Run(&Job{Value: 123}) // Worker ran with value: 123
-	pool.Run(&Job{Value: "f"}) // Worker ran with value: f
+	pool.Run(&Job{Value: 123}, ":)") // Worker ran with values: 123 :)
+	pool.Run(&Job{Value: "f"}, ":(") // Worker ran with values: f :(
 
 	// Busy & total workers
 	busyWorkers := pool.Busy()

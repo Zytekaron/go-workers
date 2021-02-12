@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/Zytekaron/go-workers"
 	"time"
-	"workers"
 )
 
 // An optional struct to hold useful data
@@ -42,7 +42,7 @@ func main() {
 		// remove enough workers to set off the upscale operation :)
 		for {
 			// upscale when the pool is using 95% or more of its workers
-			if float64(pool.Busy()) > float64(pool.Size()) * 0.95 {
+			if float64(pool.Busy()) > float64(pool.Size())*0.95 {
 				// add 10% more workers
 				// example: 100 -> 110 -> 121 -> 133 -> 146 -> 160
 				count := float64(pool.Size()) * (1 + 0.10)
@@ -50,7 +50,7 @@ func main() {
 			}
 
 			// downscale when the pool is using 50% or less of its workers
-			if float64(pool.Busy()) < float64(pool.Size()) * 0.50 {
+			if float64(pool.Busy()) < float64(pool.Size())*0.50 {
 				// remove 25% of the workers
 				// example: 100 -> 75 -> 56 -> 42 -> 31 -> 23
 				count := float64(pool.Size()) * (1 - 0.25)
@@ -62,7 +62,7 @@ func main() {
 		}
 	}()
 
-	fmt.Scanln() // Wait for user input before stopping the pool and exiting
+	_, _ = fmt.Scanln() // Wait for user input before stopping the pool and exiting
 
 	// Stop all workers once they complete their current job.
 	// Any active workers may take time to stop (based on your run function).

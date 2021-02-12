@@ -38,6 +38,10 @@ func TestWorkerPool_ScaleDown(t *testing.T) {
 	}
 }
 
+func TestNewBufferedPool(t *testing.T) {
+	NewBufferedPool(10, 5, func(interface{}) {})
+}
+
 func TestWorkerPool_ScaleRandom(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	pool := NewPool(10, func(interface{}) {})
@@ -50,6 +54,8 @@ func TestWorkerPool_ScaleRandom(t *testing.T) {
 	// assuming you always upsize AFTER a downsize
 	// (goroutines here prevent that order)
 
+	// forgive this ugly test!
+
 	go pool.ScaleUp(100)
 	<-time.After(1 * time.Millisecond)
 	go pool.ScaleDown(25)
@@ -59,7 +65,6 @@ func TestWorkerPool_ScaleRandom(t *testing.T) {
 	go pool.ScaleUp(125)
 	<-time.After(1 * time.Millisecond)
 	pool.ScaleDown(60)
-
 	<-time.After(1 * time.Millisecond)
 	pool.ScaleDown(50)
 

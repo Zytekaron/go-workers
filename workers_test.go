@@ -38,12 +38,26 @@ func TestWorkerPool_ScaleDown(t *testing.T) {
 	}
 }
 
-func TestWorkerPool_Stop(t *testing.T) {
-	pool := NewPool(10, func(interface{}) {})
+func TestWorkerPool_Busy(t *testing.T) {
+	pool := NewPool(10, func(interface{}) {
+		<-make(chan bool) // block forever (until test ends)
+	})
 
-	_ = pool.ScaleDown(5)
-	if pool.size != 5 {
-		t.Error("pool size should be 5, not", pool.size)
+	for i := 0; i < 5; i++ {
+		go pool.Run(struct{}{})
+	}
+	<-time.After(10 * time.Microsecond) // wait for goroutines to start jobs
+	if pool.Busy() != 5 {
+		t.Error("busy workers should equal 5, not", pool.Busy())
+	}
+
+	for i := 0; i < 10; i++ {
+		// 5 running, 10 additional | max 10
+		go pool.Run(struct{}{})
+	}
+	<-time.After(10 * time.Microsecond) // wait for goroutines to start jobs
+	if pool.Busy() != 10 {
+		t.Error("busy workers should equal 10, not", pool.Busy())
 	}
 }
 
@@ -53,7 +67,9 @@ func TestNewBufferedPool(t *testing.T) {
 
 func TestWorkerPool_ScaleRandom(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-	pool := NewPool(10, func(interface{}) {})
+	pool := NewPool(10, func(interface{}) {
+		<-make(chan bool) // block forever (until test ends)
+	})
 
 	// scaling random in goroutines has the
 	// potential to cause scaling issues
@@ -63,22 +79,18 @@ func TestWorkerPool_ScaleRandom(t *testing.T) {
 	// assuming you always upsize AFTER a downsize
 	// (goroutines here prevent that order)
 
-	// forgive this ugly test!
+	go pool.ScaleTo(100)
+	go pool.ScaleTo(25)
+	go pool.ScaleTo(80)
+	go pool.ScaleTo(125)
+	go pool.ScaleTo(60)
 
-	go pool.ScaleUp(100)
+	// run this one last
 	<-time.After(time.Microsecond)
-	go pool.ScaleDown(25)
-	<-time.After(time.Microsecond)
-	go pool.ScaleUp(80)
-	<-time.After(time.Microsecond)
-	go pool.ScaleUp(125)
-	<-time.After(time.Microsecond)
-	go pool.ScaleDown(60)
-	<-time.After(time.Microsecond)
-	pool.ScaleDown(50)
+	pool.ScaleTo(50)
 
 	<-time.After(1 * time.Millisecond)
-	if pool.size != 50 {
-		t.Error("pool size should be 50, not", pool.size)
+	if pool.Size() != 50 {
+		t.Error("pool size should be 50, not", pool.Size())
 	}
 }
